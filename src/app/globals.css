@@ -1,26 +1,203 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/* ──────────────────────────────────────────────
+   Elitecloth Design System
+   Based on Stitch "Earth & Azure" dark theme
+   ────────────────────────────────────────────── */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-heading);
+
+  /* Brand palette */
+  --color-warm-white: #f5f0e8;
+  --color-ink-black: #0a0a0a;
+  --color-surface-elevated: #161616;
+  --color-surface-card: #1a1a1a;
+  --color-shopee-orange: #EE4D2D;
+  --color-tiktok-red: #fe2c55;
+  --color-border-subtle: rgba(245, 240, 232, 0.1);
+  --color-border-hover: rgba(245, 240, 232, 0.25);
+  --color-text-muted: rgba(245, 240, 232, 0.6);
+
+  /* shadcn overrides */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* Dark-only design — Elitecloth is always dark */
+  --background: #0a0a0a;
+  --foreground: #f5f0e8;
+  --card: #161616;
+  --card-foreground: #f5f0e8;
+  --popover: #161616;
+  --popover-foreground: #f5f0e8;
+  --primary: #f5f0e8;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #f5f0e8;
+  --muted: #1a1a1a;
+  --muted-foreground: rgba(245, 240, 232, 0.6);
+  --accent: #1a1a1a;
+  --accent-foreground: #f5f0e8;
+  --destructive: #EE4D2D;
+  --border: rgba(245, 240, 232, 0.1);
+  --input: rgba(245, 240, 232, 0.1);
+  --ring: rgba(245, 240, 232, 0.3);
+  --radius: 1rem;
+
+  --font-heading: "Montserrat", sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+  html {
+    @apply font-sans antialiased;
+    scroll-behavior: smooth;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Dot texture overlay ── */
+.dot-texture {
+  background-image:
+    radial-gradient(circle, rgba(245, 240, 232, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+/* ── Grid background (from Stitch component) ── */
+.grid-background {
+  background-image:
+    linear-gradient(to right, rgba(245, 240, 232, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245, 240, 232, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── Glow effects ── */
+.glow-shopee {
+  box-shadow: 0 0 20px rgba(238, 77, 45, 0.15);
+}
+.glow-tiktok {
+  box-shadow: 0 0 20px rgba(254, 44, 85, 0.15);
+}
+.glow-warm {
+  box-shadow: 0 0 30px rgba(245, 240, 232, 0.06);
+}
+
+/* ── Card hover glow ── */
+.card-glow {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(245, 240, 232, 0.08), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+.card-glow:hover::before {
+  opacity: 1;
+}
+.card-glow:hover {
+  border-color: rgba(245, 240, 232, 0.2);
+}
+
+/* ── Pill button ── */
+.btn-pill {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all duration-200;
+}
+.btn-pill:hover {
+  transform: translateY(-1px);
+}
+
+/* ── Glassmorphism nav ── */
+.glass-nav {
+  background: rgba(10, 10, 10, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(245, 240, 232, 0.08);
+}
+
+/* ── Hide scrollbar ── */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Animate entrance ── */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(245, 240, 232, 0) 0%,
+    rgba(245, 240, 232, 0.05) 50%,
+    rgba(245, 240, 232, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
 }
