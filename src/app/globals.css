@@ -76,7 +76,8 @@
   --ring: rgba(245, 240, 232, 0.3);
   --radius: 1rem;
 
-  --font-heading: "Montserrat", sans-serif;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-heading: "Montserrat", "Avenir Next", "Segoe UI", Arial, sans-serif;
 }
 
 @layer base {
