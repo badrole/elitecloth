@@ -26,7 +26,7 @@ export default async function HomePage() {
   return (
     <>
       {/* ═══════════════════ HERO ═══════════════════ */}
-      <GridBackground className="relative min-h-[85vh] overflow-hidden">
+      <GridBackground className="relative min-h-[60vh] overflow-hidden">
         {/* Hero background image */}
         {heroOutfit && (
           <div className="absolute inset-0 z-0">
@@ -42,14 +42,6 @@ export default async function HomePage() {
         )}
 
         <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-24 text-center md:px-8 md:py-32 lg:py-40">
-          {/* Eyebrow */}
-          <div className="animate-fade-up mb-6 flex items-center gap-2 rounded-full border border-border-subtle bg-warm-white/5 px-4 py-2 backdrop-blur-md">
-            <Sparkles size={14} className="text-shopee-orange" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-warm-white/60">
-              Outfit Terkurasi oleh AI
-            </span>
-          </div>
-
           {/* Headline */}
           <h1
             className="animate-fade-up max-w-3xl text-4xl font-bold leading-[1.1] tracking-tight text-warm-white md:text-6xl lg:text-7xl"
@@ -69,52 +61,9 @@ export default async function HomePage() {
             className="animate-fade-up mt-6 max-w-xl text-base leading-relaxed text-warm-white/50 md:text-lg"
             style={{ animationDelay: "0.2s" }}
           >
-            Katalog outfit cowok kuliah low budget — sudah di-mix-and-match,
+            Katalog outfit — sudah di-mix-and-match,
             langsung terhubung ke Shopee dan TikTok Shop.
           </p>
-
-          {/* CTAs */}
-          <div
-            className="animate-fade-up mt-10 flex flex-col gap-3 sm:flex-row"
-            style={{ animationDelay: "0.3s" }}
-          >
-            <Link
-              href="/outfit"
-              className="btn-pill bg-warm-white text-ink-black hover:bg-warm-white/90"
-            >
-              Jelajahi Outfit
-              <ArrowRight size={16} />
-            </Link>
-            <Link
-              href="/outfit?sort=popular"
-              className="btn-pill border border-border-subtle bg-transparent text-warm-white hover:border-border-hover"
-            >
-              <TrendingUp size={16} />
-              Yang Lagi Trending
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div
-            className="animate-fade-up mt-16 grid grid-cols-3 gap-8 md:gap-16"
-            style={{ animationDelay: "0.4s" }}
-          >
-            {[
-              { value: `${latestResult.total}+`, label: "Outfit" },
-              { value: "Rp 50rb", label: "Mulai Dari" },
-              { value: "2", label: "Marketplace" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-2xl font-bold text-warm-white md:text-3xl"
-                   style={{ fontFamily: "var(--font-heading)" }}>
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-xs uppercase tracking-wider text-warm-white/30">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
         </div>
       </GridBackground>
 
@@ -129,12 +78,12 @@ export default async function HomePage() {
             {(categories.length > 0
               ? categories
               : [
-                  "kampus",
-                  "casual",
-                  "semi-formal",
-                  "nongkrong",
-                  "olahraga",
-                ]
+                "kampus",
+                "casual",
+                "semi-formal",
+                "nongkrong",
+                "olahraga",
+              ]
             ).map((cat) => (
               <Link
                 key={cat}

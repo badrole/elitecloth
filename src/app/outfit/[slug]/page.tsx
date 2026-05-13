@@ -8,6 +8,7 @@ import { AffiliateButton } from "@/components/affiliate-button";
 import { OutfitCard } from "@/components/outfit-card";
 import { ShareButton } from "./share-button";
 import { ViewTracker } from "./view-tracker";
+import { ImageGallery } from "./image-gallery";
 import {
   getOutfitBySlug,
   getOutfitItems,
@@ -83,43 +84,11 @@ export default async function OutfitDetailPage({ params }: PageProps) {
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           {/* ── Left: Images Slider ── */}
           <div className="space-y-4">
-            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-border-subtle group">
-              <div className="flex h-full w-full snap-x snap-mandatory overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {/* Main Cover */}
-                <div className="relative min-w-full h-full snap-center">
-                  <Image
-                    src={outfit.cover_image_url}
-                    alt={outfit.name}
-                    fill
-                    className="object-cover"
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                  />
-                </div>
-                
-                {/* Gallery Images */}
-                {outfit.gallery_image_urls &&
-                  outfit.gallery_image_urls.length > 0 &&
-                  outfit.gallery_image_urls.map((url, i) => (
-                    <div key={i} className="relative min-w-full h-full snap-center">
-                      <Image
-                        src={url}
-                        alt={`${outfit.name} slide ${i + 2}`}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
-                      />
-                    </div>
-                  ))}
-              </div>
-              
-              {/* Slider Hint */}
-              {outfit.gallery_image_urls && outfit.gallery_image_urls.length > 0 && (
-                <div className="absolute bottom-4 right-4 rounded-full bg-black/60 px-3 py-1.5 text-[10px] font-medium text-white backdrop-blur-md flex items-center gap-1.5 pointer-events-none">
-                  Geser foto <ArrowLeft className="rotate-180" size={10} />
-                </div>
-              )}
-            </div>
+            <ImageGallery 
+              coverImage={outfit.cover_image_url}
+              galleryImages={outfit.gallery_image_urls}
+              name={outfit.name}
+            />
           </div>
 
           {/* ── Right: Info ── */}
@@ -242,11 +211,7 @@ export default async function OutfitDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Disclaimer */}
-            <p className="mt-6 rounded-xl bg-warm-white/5 p-4 text-xs leading-relaxed text-warm-white/30">
-              💡 Elitecloth adalah platform affiliate. Kami menerima komisi
-              jika kamu membeli produk melalui link di atas.
-            </p>
+
           </div>
         </div>
 

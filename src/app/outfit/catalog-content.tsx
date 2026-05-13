@@ -5,23 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { OutfitCard } from "@/components/outfit-card";
 import { getOutfits, getAllCategories, getAllTags } from "@/lib/supabase";
-import { categoryLabel, priceRangeLabel } from "@/lib/helpers";
+import { categoryLabel } from "@/lib/helpers";
 import type { Outfit } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-
-const PRICE_RANGES = [
-  { value: "", label: "Semua Harga" },
-  { value: "0-200000", label: "< Rp 200rb" },
-  { value: "200000-500000", label: "Rp 200rb - 500rb" },
-  { value: "500000-1000000", label: "Rp 500rb - 1jt" },
-  { value: "1000000-999999999", label: "> Rp 1jt" },
-];
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Terbaru" },
   { value: "popular", label: "Populer" },
-  { value: "price_asc", label: "Harga ↑" },
-  { value: "price_desc", label: "Harga ↓" },
 ];
 
 export function CatalogContent() {
@@ -39,8 +29,7 @@ export function CatalogContent() {
   // Read filters from URL
   const category = searchParams.get("category") ?? "";
   const tag = searchParams.get("tag") ?? "";
-  const price = searchParams.get("price") ?? "";
-  const sort = (searchParams.get("sort") as "newest" | "popular" | "price_asc" | "price_desc") ?? "newest";
+  const sort = (searchParams.get("sort") as "newest" | "popular") ?? "newest";
   const page = parseInt(searchParams.get("page") ?? "1");
 
   const updateParams = useCallback(
@@ -61,15 +50,10 @@ export function CatalogContent() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const [minPrice, maxPrice] = price
-        ? price.split("-").map(Number)
-        : [undefined, undefined];
 
       const result = await getOutfits({
         category: category || undefined,
         tag: tag || undefined,
-        minPrice,
-        maxPrice,
         sort,
         page,
         limit: 12,
@@ -82,7 +66,7 @@ export function CatalogContent() {
     }
 
     fetchData();
-  }, [category, tag, price, sort, page]);
+  }, [category, tag, sort, page]);
 
   // Fetch categories + tags once
   useEffect(() => {
@@ -91,7 +75,7 @@ export function CatalogContent() {
   }, []);
 
   const activeFilters =
-    (category ? 1 : 0) + (tag ? 1 : 0) + (price ? 1 : 0);
+    (category ? 1 : 0) + (tag ? 1 : 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12">
@@ -150,26 +134,6 @@ export function CatalogContent() {
             ))}
           </div>
 
-          {/* Price range */}
-          <div className="ml-3 flex items-center gap-1.5">
-            <span className="text-xs text-warm-white/30">Harga:</span>
-            {PRICE_RANGES.slice(1).map((pr) => (
-              <button
-                key={pr.value}
-                onClick={() =>
-                  updateParams({ price: price === pr.value ? "" : pr.value })
-                }
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-medium transition-all",
-                  price === pr.value
-                    ? "bg-warm-white text-ink-black"
-                    : "border border-border-subtle text-warm-white/50 hover:border-border-hover hover:text-warm-white"
-                )}
-              >
-                {pr.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Sort */}
@@ -228,28 +192,6 @@ export function CatalogContent() {
             </div>
           </div>
 
-          {/* Price */}
-          <div className="mb-4">
-            <p className="mb-2 text-xs text-warm-white/30">Harga Total</p>
-            <div className="flex flex-wrap gap-2">
-              {PRICE_RANGES.map((pr) => (
-                <button
-                  key={pr.value}
-                  onClick={() =>
-                    updateParams({ price: price === pr.value ? "" : pr.value })
-                  }
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-medium transition-all",
-                    price === pr.value
-                      ? "bg-warm-white text-ink-black"
-                      : "border border-border-subtle text-warm-white/50"
-                  )}
-                >
-                  {pr.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Tags */}
           {tags.length > 0 && (
@@ -295,16 +237,8 @@ export function CatalogContent() {
               </button>
             </span>
           )}
-          {price && (
-            <span className="flex items-center gap-1 rounded-full bg-warm-white/10 px-3 py-1 text-xs text-warm-white">
-              {priceRangeLabel(price)}
-              <button onClick={() => updateParams({ price: "" })}>
-                <X size={12} />
-              </button>
-            </span>
-          )}
           <button
-            onClick={() => updateParams({ category: "", tag: "", price: "" })}
+            onClick={() => updateParams({ category: "", tag: "" })}
             className="text-xs text-warm-white/30 hover:text-warm-white"
           >
             Hapus semua

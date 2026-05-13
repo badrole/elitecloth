@@ -57,12 +57,10 @@ export async function getOutfits(options?: {
   category?: string;
   tag?: string;
   gender?: string;
-  minPrice?: number;
-  maxPrice?: number;
   search?: string;
   page?: number;
   limit?: number;
-  sort?: "newest" | "popular" | "price_asc" | "price_desc";
+  sort?: "newest" | "popular";
 }) {
   const page = options?.page ?? 1;
   const limit = options?.limit ?? 12;
@@ -83,12 +81,7 @@ export async function getOutfits(options?: {
   if (options?.tag) {
     query = query.contains("tags", [options.tag]);
   }
-  if (options?.minPrice) {
-    query = query.gte("estimated_total_price", options.minPrice);
-  }
-  if (options?.maxPrice) {
-    query = query.lte("estimated_total_price", options.maxPrice);
-  }
+
   if (options?.search) {
     query = query.or(
       `name.ilike.%${options.search}%,description.ilike.%${options.search}%`
@@ -100,12 +93,7 @@ export async function getOutfits(options?: {
     case "popular":
       query = query.order("view_count", { ascending: false });
       break;
-    case "price_asc":
-      query = query.order("estimated_total_price", { ascending: true });
-      break;
-    case "price_desc":
-      query = query.order("estimated_total_price", { ascending: false });
-      break;
+
     default:
       query = query.order("created_at", { ascending: false });
   }
