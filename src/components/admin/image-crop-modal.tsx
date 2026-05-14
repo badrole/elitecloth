@@ -54,7 +54,7 @@ export function ImageCropModal({ imageSrc, onCropDone, onCancel }: ImageCropModa
       <div className="w-full max-w-lg rounded-2xl border border-border-subtle bg-surface-elevated p-4 space-y-4">
         <h3 className="text-lg font-bold text-warm-white">Crop Gambar</h3>
         <div className="max-h-[60vh] overflow-auto flex justify-center">
-          <ReactCrop crop={crop} onChange={setCrop} onComplete={setCompletedCrop}>
+          <ReactCrop crop={crop} onChange={setCrop} onComplete={setCompletedCrop} aspect={3 / 4}>
             <img ref={imgRef} src={imageSrc} alt="Crop" className="max-w-full" />
           </ReactCrop>
         </div>
