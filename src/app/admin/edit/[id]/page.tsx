@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { OutfitForm } from "@/components/admin/outfit-form";
-import { supabase } from "@/lib/supabase";
 import { useParams } from "next/navigation";
 
 export default function AdminEditPage() {
@@ -13,30 +12,17 @@ export default function AdminEditPage() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data, error } = await supabase
-        .from("outfits")
-        .select(`
-          *,
-          items:outfit_items(*)
-        `)
-        .eq("id", id)
-        .single();
-      
-      if (data) {
-        setInitialData(data);
+      const res = await fetch(`/api/admin/outfits/${id}`);
+      if (res.ok) {
+        setInitialData(await res.json());
       }
       setIsLoading(false);
     }
     fetchData();
   }, [id]);
 
-  if (isLoading) {
-    return <div className="text-center py-20">Memuat data...</div>;
-  }
-
-  if (!initialData) {
-    return <div className="text-center py-20 text-red-400">Etalase tidak ditemukan.</div>;
-  }
+  if (isLoading) return <div className="text-center py-20">Memuat data...</div>;
+  if (!initialData) return <div className="text-center py-20 text-red-400">Etalase tidak ditemukan.</div>;
 
   return (
     <div className="w-full">
@@ -44,7 +30,6 @@ export default function AdminEditPage() {
         <h1 className="text-2xl md:text-3xl font-bold font-heading mb-2">Edit Etalase</h1>
         <p className="text-warm-white/60 text-sm">Update informasi outfit, harga, dan link affiliate.</p>
       </div>
-      
       <div className="bg-surface-elevated rounded-2xl p-6 md:p-8 border border-border-subtle">
         <OutfitForm initialData={initialData} isEdit={true} />
       </div>
