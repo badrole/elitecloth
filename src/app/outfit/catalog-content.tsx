@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { OutfitCard } from "@/components/outfit-card";
+import { FadeIn } from "@/components/ui/fade-in";
 import { getOutfits, getAllCategories, getAllTags } from "@/lib/supabase";
 import { categoryLabel } from "@/lib/helpers";
 import type { Outfit } from "@/lib/supabase";
@@ -270,8 +271,15 @@ export function CatalogContent() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-          {outfits.map((outfit) => (
-            <OutfitCard key={outfit.id} outfit={outfit} />
+          {outfits.map((outfit, i) => (
+            <FadeIn
+              key={outfit.id}
+              direction="up"
+              delay={(i % 8) * 70}
+              distance={28}
+            >
+              <OutfitCard outfit={outfit} />
+            </FadeIn>
           ))}
         </div>
       )}

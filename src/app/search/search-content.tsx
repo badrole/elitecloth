@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { SearchIcon } from "lucide-react";
 import { OutfitCard } from "@/components/outfit-card";
 import { SearchBar } from "@/components/search-bar";
+import { FadeIn } from "@/components/ui/fade-in";
 import { getOutfits } from "@/lib/supabase";
 import type { Outfit } from "@/lib/supabase";
 
@@ -70,8 +71,15 @@ export function SearchContent() {
         </div>
       ) : outfits.length > 0 ? (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-          {outfits.map((outfit) => (
-            <OutfitCard key={outfit.id} outfit={outfit} />
+          {outfits.map((outfit, i) => (
+            <FadeIn
+              key={outfit.id}
+              direction="up"
+              delay={(i % 8) * 70}
+              distance={28}
+            >
+              <OutfitCard outfit={outfit} />
+            </FadeIn>
           ))}
         </div>
       ) : query ? (

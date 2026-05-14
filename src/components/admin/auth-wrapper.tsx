@@ -36,8 +36,8 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4 bg-ink-black text-warm-white">
-        <div className="w-full max-w-sm rounded-2xl border border-border-subtle bg-surface-elevated p-6 text-center">
+      <div className="flex min-h-screen items-center justify-center p-4 text-warm-white">
+        <div className="w-full max-w-sm rounded-2xl border border-border-subtle bg-surface-elevated/80 p-6 text-center backdrop-blur-md">
           <h1 className="mb-6 text-2xl font-bold font-heading">Admin Login</h1>
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -58,9 +58,9 @@ export function AdminAuthWrapper({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-ink-black text-warm-white">
+    <div className="min-h-screen text-warm-white">
       {/* Top Nav */}
-      <div className="border-b border-border-subtle bg-surface-elevated sticky top-0 z-10">
+      <div className="border-b border-border-subtle bg-surface-elevated/80 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" className="text-warm-white/50 hover:text-warm-white transition-colors">

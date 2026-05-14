@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { BGPattern } from "@/components/ui/bg-pattern";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -46,7 +47,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className="h-full antialiased">
-      <body className="flex min-h-full flex-col bg-background text-foreground">
+      <body className="relative flex min-h-full flex-col bg-background text-foreground">
+        {/* Global grid background — visible on every page without exception */}
+        <div className="pointer-events-none fixed inset-0 z-[-10]" aria-hidden="true">
+          <BGPattern
+            variant="grid"
+            mask="fade-edges"
+            size={48}
+            fill="rgba(245, 240, 232, 0.07)"
+            className="fixed"
+          />
+        </div>
         <Header />
         <main className="flex-1 pt-16">{children}</main>
         <Footer />
