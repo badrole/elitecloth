@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, UploadCloud, Plus, Save, Trash2, ImagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ImageCropModal } from "./image-crop-modal";
 
 interface OutfitFormProps {
   initialData?: any;
@@ -83,14 +84,26 @@ export function OutfitForm({ initialData, isEdit = false }: OutfitFormProps) {
     });
   };
 
+  // Crop state
+  const [cropData, setCropData] = useState<{ index: number; src: string } | null>(null);
+
   const handleItemFileChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
+    const src = URL.createObjectURL(file);
+    setCropData({ index, src });
+    e.target.value = "";
+  };
+
+  const handleCropDone = (croppedFile: File) => {
+    if (!cropData) return;
+    const previewUrl = URL.createObjectURL(croppedFile);
     setItems((prev) => {
       const n = [...prev];
-      n[index] = { ...n[index], file, previewUrl: URL.createObjectURL(file) };
+      n[cropData.index] = { ...n[cropData.index], file: croppedFile, previewUrl };
       return n;
     });
+    setCropData(null);
   };
 
   const addItem = (type: string, defaultName: string) => {
@@ -322,6 +335,14 @@ export function OutfitForm({ initialData, isEdit = false }: OutfitFormProps) {
       <button type="submit" disabled={isLoading} className="w-full rounded-xl bg-warm-white py-4 font-bold text-ink-black hover:bg-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
         {isLoading ? <><Loader2 className="animate-spin" size={18} /> Menyimpan...</> : isEdit ? <><Save size={18} /> Simpan Perubahan</> : <><UploadCloud size={18} /> Upload Etalase</>}
       </button>
+
+      {cropData && (
+        <ImageCropModal
+          imageSrc={cropData.src}
+          onCropDone={handleCropDone}
+          onCancel={() => setCropData(null)}
+        />
+      )}
     </form>
   );
 }
