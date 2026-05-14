@@ -38,9 +38,17 @@ export async function POST(
     }
   }
 
-  // Delete items not in the list
+  // Delete items not in the list and clean up their thumbnails
   if (body.deleteIds && Array.isArray(body.deleteIds) && body.deleteIds.length > 0) {
+    const { data: oldItems } = await supabase.from("outfit_items").select("thumbnail_url").in("id", body.deleteIds);
     await supabase.from("outfit_items").delete().in("id", body.deleteIds);
+
+    // Remove old thumbnails from storage
+    const urls = (oldItems || []).map((i: any) => i.thumbnail_url).filter(Boolean);
+    const paths = urls
+      .map((url: string) => url.match(/\/storage\/v1\/object\/public\/outfits\/(.+)$/)?.[1])
+      .filter(Boolean) as string[];
+    if (paths.length > 0) await supabase.storage.from("outfits").remove(paths);
   }
 
   return Response.json({ results });
