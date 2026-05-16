@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CatalogContent } from "./catalog-content";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Katalog Outfit",
   description:

@@ -7,7 +7,7 @@ import { FadeIn } from "@/components/ui/fade-in";
 import { getOutfits, getAllCategories } from "@/lib/supabase";
 import { categoryLabel } from "@/lib/helpers";
 
-export const revalidate = 60; // ISR: revalidate every 60 seconds
+export const revalidate = 30;
 
 export default async function HomePage() {
   const [latestResult, popularResult, categories] = await Promise.all([
