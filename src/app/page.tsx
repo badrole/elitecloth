@@ -4,6 +4,7 @@ import { ArrowRight, TrendingUp, Zap } from "lucide-react";
 import { OutfitCard } from "@/components/outfit-card";
 import { Badge } from "@/components/ui/badge";
 import { FadeIn } from "@/components/ui/fade-in";
+import { AdminTapLogo } from "@/components/admin-tap-logo";
 import { getOutfits, getAllCategories } from "@/lib/supabase";
 import { categoryLabel } from "@/lib/helpers";
 
@@ -35,17 +36,8 @@ export default async function HomePage() {
         />
 
         <div className="relative z-10 flex flex-col items-center text-center">
-          {/* Big Elitecloth Logo */}
-          <div className="animate-scale-in animate-float-slow">
-            <Image
-              src="/logo/logo.png"
-              alt="Elitecloth"
-              width={720}
-              height={720}
-              priority
-              className="h-auto w-[min(80vw,520px)] select-none drop-shadow-[0_20px_60px_rgba(245,240,232,0.08)]"
-            />
-          </div>
+          {/* Big Elitecloth Logo — 10x tap to admin */}
+          <AdminTapLogo />
 
           {/* Optional minimal tagline below the logo */}
           <p
