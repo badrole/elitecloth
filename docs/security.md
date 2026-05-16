@@ -1,149 +1,128 @@
-# Audit Keamanan Admin Login Elitecloth
+# Audit Keamanan Admin Elitecloth
 
-Tanggal audit: 14 Mei 2026
+Tanggal audit ulang: 14 Mei 2026
 
-Audit ini berdasarkan kode lokal di repository. Fokus utama: proteksi halaman admin, autentikasi, akses database Supabase, dan upload storage.
+Audit ini berdasarkan kode lokal terbaru setelah perbaikan admin login dan API admin.
 
-## Ringkasan Risiko
+## Jawaban Singkat
 
-Status keamanan admin saat ini: **kritis**.
+### Berapa lama admin panel bisa dibobol?
 
-Masalah utamanya bukan hanya PIN admin yang lemah, tetapi karena proteksi admin hanya berjalan di browser dan database Supabase mengizinkan publik melakukan perubahan data.
+Sebelum perbaikan:
 
-Jika konfigurasi production sama seperti `supabase/schema.sql`, orang luar berpotensi:
+- Estimasi: **hitungan menit**.
+- Alasannya: login bisa dibypass lewat `localStorage`, dan Supabase policy mengizinkan publik mengubah data.
 
-- Membuka admin panel tanpa tahu PIN asli.
-- Menambah outfit palsu.
-- Mengubah atau menghapus outfit.
-- Mengubah link affiliate.
-- Upload file ke bucket Supabase.
-- Mengakses operasi admin langsung lewat Supabase API memakai anon key publik.
+Setelah perbaikan sekarang:
 
-## Kelemahan yang Ditemukan
+- Estimasi untuk orang awam: **kemungkinan besar tidak bisa tembus langsung**.
+- Estimasi untuk attacker yang paham web security: **masih ada peluang jika konfigurasi production kurang ketat atau secret/key bocor**.
+- Admin panel sekarang sudah jauh lebih sulit dibobol karena memakai cookie `HttpOnly`, route admin diproteksi server-side, dan operasi admin sudah lewat API server.
+
+### Berapa persen keamanan website sekarang?
+
+Estimasi keamanan saat ini: **65-75% untuk standar MVP kecil**.
+
+Angka ini bukan ukuran absolut, tetapi estimasi berdasarkan kondisi kode yang terlihat.
+
+Kenapa belum 90%:
+
+- `supabase/schema.sql` masih menyimpan policy public write lama.
+- `SUPABASE_SERVICE_ROLE_KEY` masih fallback ke anon key.
+- `ADMIN_SESSION_SECRET` masih punya default lemah.
+- Password admin masih memakai SHA-256 polos.
+- Rate limit login masih in-memory.
+- Validasi endpoint admin masih belum ketat.
+- Belum ada audit log admin.
+
+Jika 3 hal utama ini dibereskan:
+
+- Bersihkan `supabase/schema.sql` dari policy public write dan public upload.
+- Hapus fallback secret/key yang tidak aman.
+- Ganti SHA-256 password hash dengan bcrypt, argon2, atau PBKDF2 salted.
+
+Maka estimasi keamanan bisa naik ke sekitar **80-85%**.
+
+Untuk mencapai **90%+**, tambahkan:
+
+- Rate limit production-grade.
+- Audit log admin.
+- Validasi URL, slug, tags, dan `deleteIds`.
+- MFA untuk admin.
+- Monitoring login gagal, upload, edit, dan delete.
+
+## Status Saat Ini
+
+Status keamanan admin: **jauh lebih aman dari versi sebelumnya, tetapi belum final**.
+
+Perbaikan besar yang sudah dilakukan:
+
+- PIN hardcoded `elite123` sudah tidak ditemukan.
+- Auth admin tidak lagi memakai `localStorage`.
+- Admin login sudah memakai endpoint server `/api/admin/login`.
+- Session admin sudah memakai cookie `HttpOnly`.
+- Route `/admin/*` dan `/api/admin/*` sudah diproteksi lewat `src/proxy.ts`.
+- Operasi admin sudah dipindahkan ke API server.
+- Form admin tidak lagi langsung melakukan insert/update/delete ke Supabase dari browser.
+- Upload admin sudah lewat `/api/admin/upload`.
+- Upload sudah membatasi MIME type dan ukuran file.
+- File `supabase/fix-rls-policies.sql` sudah tersedia untuk menghapus policy write publik.
+
+## Celah Lama yang Sudah Ditutup
 
 ### 1. PIN admin hardcoded di frontend
 
-File:
+Status: **selesai**
 
-- `src/components/admin/auth-wrapper.tsx`
+Sebelumnya PIN admin disimpan langsung di komponen frontend. Sekarang PIN tersebut tidak ditemukan lagi, dan login memakai `ADMIN_PASSWORD_HASH` di server.
 
-Kode saat ini menyimpan PIN langsung di frontend:
+### 2. Bypass login lewat localStorage
 
-```ts
-if (pin === "elite123") {
-```
+Status: **selesai**
 
-Masalah:
+Sebelumnya status login disimpan sebagai `localStorage.adminAuth`. Sekarang `localStorage` tidak lagi dipakai untuk autentikasi admin.
 
-- PIN bisa dilihat dari source JavaScript browser.
-- PIN pendek dan mudah ditebak.
-- Tidak ada rate limit.
-- Tidak ada lockout setelah gagal berkali-kali.
-- Tidak ada MFA.
+### 3. Halaman admin hanya diproteksi client-side
 
-Cara mengatasi:
+Status: **sebagian besar selesai**
 
-- Hapus PIN hardcoded dari frontend.
-- Pakai Supabase Auth atau sistem login server-side.
-- Gunakan password kuat, bukan PIN pendek.
-- Tambahkan rate limit login.
-- Aktifkan MFA jika memungkinkan.
-
-## 2. Login admin bisa dibypass lewat localStorage
-
-File:
-
-- `src/components/admin/auth-wrapper.tsx`
-
-Kode saat ini:
-
-```ts
-localStorage.setItem("adminAuth", "true");
-```
-
-Masalah:
-
-- `localStorage` bisa diubah manual dari DevTools.
-- Siapa pun bisa menjalankan:
-
-```js
-localStorage.setItem("adminAuth", "true");
-```
-
-- Setelah itu UI admin bisa terbuka.
-- Ini hanya proteksi tampilan, bukan proteksi keamanan.
-
-Cara mengatasi:
-
-- Jangan pakai `localStorage` sebagai bukti login admin.
-- Pakai cookie session yang dibuat server.
-- Cookie harus memakai:
-  - `httpOnly`
-  - `Secure`
-  - `SameSite=Lax` atau `SameSite=Strict`
-- Validasi session harus dilakukan di server, bukan hanya di client.
-
-## 3. Halaman `/admin` tidak diproteksi server-side
-
-File:
-
-- `src/app/admin/layout.tsx`
-
-Masalah:
-
-- Layout admin hanya memakai komponen client `AdminAuthWrapper`.
-- Tidak ada middleware yang memblokir request ke `/admin`.
-- Tidak ada validasi session di server.
-
-Cara mengatasi:
-
-- Tambahkan middleware untuk route `/admin/:path*`.
-- Middleware harus mengecek session admin yang valid.
-- Jika belum login, redirect ke halaman login.
-- Jangan render admin page hanya berdasarkan state client.
-
-Contoh target desain:
+Sekarang ada `src/proxy.ts` yang memproteksi:
 
 ```txt
-/admin/login       -> halaman login
-/admin/*           -> wajib session admin valid
-/api/admin/*       -> wajib session admin valid
+/admin/:path*
+/api/admin/:path*
 ```
 
-## 4. Supabase anon key dipakai langsung untuk operasi admin
+Jika session tidak valid, halaman admin diarahkan ke `/admin/login`, dan API admin mengembalikan `401`.
 
-File:
+### 4. Operasi admin langsung dari browser ke Supabase
 
-- `src/lib/supabase.ts`
-- `src/components/admin/outfit-form.tsx`
-- `src/app/admin/page.tsx`
-- `src/app/admin/edit/[id]/page.tsx`
+Status: **selesai untuk flow admin utama**
 
-Masalah:
+Komponen admin sekarang memanggil endpoint server:
 
-- Client memakai `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-- Key dengan prefix `NEXT_PUBLIC_` memang bisa dilihat publik.
-- Operasi insert, update, delete, dan upload dilakukan dari browser.
-- Jika RLS terlalu terbuka, attacker bisa langsung memanggil Supabase API tanpa lewat UI admin.
+```txt
+/api/admin/outfits
+/api/admin/outfits/[id]
+/api/admin/outfits/[id]/items
+/api/admin/upload
+```
 
-Cara mengatasi:
+Ini lebih aman dibanding versi sebelumnya karena browser tidak lagi langsung melakukan write ke tabel admin dengan Supabase anon key.
 
-- Frontend publik hanya boleh read data published dan insert analytics yang aman.
-- Operasi admin harus dipindah ke server:
-  - Next.js Route Handler
-  - Server Action
-  - atau backend terpisah
-- Server memverifikasi session admin terlebih dahulu.
-- Setelah valid, server boleh memakai Supabase service role key.
-- Service role key tidak boleh pernah dikirim ke browser.
+### 5. Public upload langsung dari browser
 
-## 5. RLS Supabase mengizinkan publik mengubah data
+Status: **selesai di kode aplikasi, perlu pastikan policy production sudah diperbarui**
 
-File:
+Upload admin sekarang lewat API server dan memakai validasi dasar. Namun keamanan final tetap bergantung pada policy Supabase production.
 
-- `supabase/schema.sql`
+## Celah yang Masih Perlu Diperbaiki
 
-Policy berbahaya:
+### 1. `supabase/schema.sql` masih berisi policy write publik lama
+
+Status: **masih perlu diperbaiki**
+
+File `supabase/fix-rls-policies.sql` sudah benar untuk menghapus policy berbahaya, tetapi `supabase/schema.sql` masih membuat policy lama ini:
 
 ```sql
 CREATE POLICY "Public can insert outfits" ON outfits FOR INSERT WITH CHECK (true);
@@ -155,239 +134,259 @@ CREATE POLICY "Public can update outfit items" ON outfit_items FOR UPDATE USING 
 CREATE POLICY "Public can delete outfit items" ON outfit_items FOR DELETE USING (true);
 ```
 
-Masalah:
-
-- Semua orang bisa menambah outfit.
-- Semua orang bisa mengubah outfit.
-- Semua orang bisa menghapus outfit.
-- Semua orang bisa mengubah link affiliate.
-
-Cara mengatasi:
-
-- Hapus policy public untuk insert/update/delete.
-- Public hanya boleh membaca outfit yang `published = true`.
-- Public hanya boleh membaca item outfit.
-- Write admin harus dibatasi ke user admin atau dilakukan lewat server service role.
-
-Contoh arah policy yang lebih aman:
-
-```sql
-DROP POLICY IF EXISTS "Public can insert outfits" ON outfits;
-DROP POLICY IF EXISTS "Public can update outfits" ON outfits;
-DROP POLICY IF EXISTS "Public can delete outfits" ON outfits;
-
-DROP POLICY IF EXISTS "Public can insert outfit items" ON outfit_items;
-DROP POLICY IF EXISTS "Public can update outfit items" ON outfit_items;
-DROP POLICY IF EXISTS "Public can delete outfit items" ON outfit_items;
-```
-
-Jika memakai Supabase Auth, buat policy khusus admin berdasarkan `auth.uid()` atau custom claim role.
-
-## 6. Storage upload terbuka untuk publik
-
-File:
-
-- `supabase/schema.sql`
-
-Policy saat ini:
+`supabase/schema.sql` juga masih membuat policy public upload:
 
 ```sql
 CREATE POLICY "Public Upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'outfits');
 ```
 
-Masalah:
+Risiko:
 
-- Publik bisa upload file ke bucket `outfits`.
-- Bisa menyebabkan spam file, penyalahgunaan storage, dan biaya tambahan.
-- Bisa dipakai untuk menghosting konten yang tidak diinginkan.
+- Jika database dibuat ulang dari `schema.sql`, celah lama akan aktif lagi.
+- Developer bisa keliru menjalankan `schema.sql` tanpa menjalankan `fix-rls-policies.sql`.
 
-Cara mengatasi:
+Yang perlu diubah:
 
-- Hapus policy public upload.
-- Upload hanya boleh admin.
-- Validasi file di server:
-  - hanya `image/jpeg`, `image/png`, `image/webp`
-  - ukuran maksimal, misalnya 2 MB atau 5 MB
-  - nama file random
-  - jangan percaya ekstensi file saja
+- Hapus policy public insert/update/delete dari `supabase/schema.sql`.
+- Hapus policy `Public Upload` dari `supabase/schema.sql`.
+- Jadikan `fix-rls-policies.sql` sebagai migrasi tambahan atau gabungkan ke schema utama.
 
-Contoh minimal:
+### 2. Server Supabase client fallback ke anon key
 
-```sql
-DROP POLICY IF EXISTS "Public Upload" ON storage.objects;
-```
-
-## 7. Tidak ada validasi server untuk input admin
+Status: **masih perlu diperbaiki**
 
 File:
 
-- `src/components/admin/outfit-form.tsx`
+- `src/lib/supabase-server.ts`
 
 Masalah:
 
-- Nama outfit, kategori, tags, dan link affiliate dikirim langsung dari client ke Supabase.
-- Validasi hanya bergantung pada input browser.
-- Attacker bisa bypass validasi HTML dengan request manual.
+```ts
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+```
 
-Cara mengatasi:
+Risiko:
 
-- Validasi ulang semua input di server.
-- Batasi panjang field.
-- Validasi format URL.
-- Hanya izinkan domain affiliate yang valid, misalnya:
-  - `shopee.co.id`
-  - domain tracking resmi Shopee
-  - `tiktok.com`
-  - domain tracking resmi TikTok Shop
-- Normalisasi kategori dan tags.
+- Jika `SUPABASE_SERVICE_ROLE_KEY` tidak ada di production, API admin diam-diam memakai anon key.
+- Ini bisa membuat behavior production tidak jelas dan bergantung pada RLS.
+- Untuk admin API, gagal cepat lebih aman daripada fallback ke anon key.
 
-## 8. Tidak ada audit log aktivitas admin
+Yang perlu diubah:
+
+```ts
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseServiceRoleKey) {
+  throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for admin operations");
+}
+```
+
+### 3. Session secret masih punya default lemah
+
+Status: **masih perlu diperbaiki**
+
+File:
+
+- `src/proxy.ts`
+- `src/lib/supabase-server.ts`
 
 Masalah:
 
-- Jika ada data berubah, sulit tahu siapa yang mengubah.
-- Tidak ada catatan login, upload, edit, atau delete.
-
-Cara mengatasi:
-
-- Buat tabel `admin_audit_logs`.
-- Catat:
-  - admin user id
-  - aksi
-  - target tabel
-  - target id
-  - waktu
-  - IP address jika tersedia
-  - user agent
-
-Contoh event:
-
-```txt
-admin.login
-outfit.create
-outfit.update
-outfit.delete
-storage.upload
+```ts
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || "elitecloth-admin-secret-change-me";
 ```
 
-## Prioritas Perbaikan
+Risiko:
 
-### Prioritas 1: Tutup akses write publik Supabase
-
-Ini harus dilakukan paling dulu.
-
-Yang perlu diubah:
-
-- Hapus policy public insert/update/delete untuk `outfits`.
-- Hapus policy public insert/update/delete untuk `outfit_items`.
-- Hapus policy public upload storage.
-
-Alasan:
-
-- Selama policy ini terbuka, keamanan admin UI tidak banyak berarti.
-- Attacker bisa langsung menyerang Supabase API.
-
-## Prioritas 2: Ganti login localStorage dengan auth server-side
+- Jika env `ADMIN_SESSION_SECRET` lupa di-set, production memakai secret default yang bisa ditebak.
+- Session admin bisa dipalsukan jika secret diketahui.
 
 Yang perlu diubah:
 
-- Hapus `AdminAuthWrapper` sebagai mekanisme keamanan utama.
-- Buat halaman `/admin/login`.
-- Buat session cookie server-side.
-- Tambahkan middleware untuk `/admin/*`.
-- Proteksi juga endpoint `/api/admin/*`.
+- Jangan punya fallback default untuk secret.
+- Production harus error jika `ADMIN_SESSION_SECRET` kosong.
+- Gunakan secret random minimal 32 byte.
 
-Alasan:
+### 4. Password admin memakai SHA-256 polos
 
-- Keputusan apakah user admin atau bukan harus terjadi di server.
-- Client boleh menampilkan UI, tetapi tidak boleh menjadi sumber kebenaran auth.
+Status: **masih perlu diperbaiki**
 
-## Prioritas 3: Pindahkan operasi admin ke server
+File:
+
+- `src/app/api/admin/login/route.ts`
+
+Masalah:
+
+Password di-hash memakai SHA-256 biasa:
+
+```ts
+crypto.subtle.digest("SHA-256", data)
+```
+
+Risiko:
+
+- SHA-256 terlalu cepat untuk password hashing.
+- Jika hash bocor, brute force lebih mudah.
 
 Yang perlu diubah:
 
-- Jangan insert/update/delete Supabase langsung dari komponen client.
-- Buat endpoint server untuk:
-  - create outfit
-  - update outfit
-  - delete outfit
-  - upload image
-  - delete image jika diperlukan
-- Endpoint wajib validasi session admin.
+- Pakai password hashing yang memang didesain untuk password, misalnya `bcrypt`, `argon2`, atau minimal PBKDF2 dengan salt dan iterasi tinggi.
+- Simpan hash salted, bukan SHA-256 polos.
 
-Alasan:
+### 5. Perbandingan hash belum constant-time
 
-- Service role key hanya aman jika dipakai di server.
-- Validasi input bisa dipusatkan.
-- RLS bisa dibuat jauh lebih ketat.
+Status: **masih perlu diperbaiki**
 
-## Prioritas 4: Tambahkan hardening login
+File:
+
+- `src/app/api/admin/login/route.ts`
+- `src/proxy.ts`
+- `src/lib/supabase-server.ts`
+
+Masalah:
+
+Hash dibandingkan dengan `===`.
+
+Risiko:
+
+- Secara teori rentan timing attack.
+- Dampaknya lebih kecil dibanding poin lain, tetapi mudah diperbaiki.
+
+Yang perlu diubah:
+
+- Gunakan `crypto.timingSafeEqual` di runtime Node.js.
+- Atau implementasi constant-time compare untuk Edge/proxy jika tetap berjalan di Edge runtime.
+
+### 6. Rate limit login masih in-memory
+
+Status: **masih perlu diperbaiki untuk production**
+
+File:
+
+- `src/app/api/admin/login/route.ts`
+
+Masalah:
+
+Rate limit disimpan di `Map` memory lokal.
+
+Risiko:
+
+- Tidak stabil di serverless.
+- Reset saat instance restart.
+- Tidak efektif jika ada banyak instance.
+
+Yang perlu diubah:
+
+- Pakai storage eksternal seperti Redis, Upstash, database, atau rate limit platform.
+- Rate limit sebaiknya berdasarkan IP dan fingerprint tambahan.
+
+### 7. Validasi input admin masih belum cukup ketat
+
+Status: **masih perlu diperbaiki**
+
+File:
+
+- `src/app/api/admin/outfits/route.ts`
+- `src/app/api/admin/outfits/[id]/route.ts`
+- `src/app/api/admin/outfits/[id]/items/route.ts`
+
+Yang sudah ada:
+
+- Validasi field wajib.
+- Batas panjang `name` dan `category`.
+- Upload membatasi MIME dan ukuran.
+
+Yang masih kurang:
+
+- Validasi slug.
+- Validasi panjang tags.
+- Validasi jumlah gallery image.
+- Validasi URL gambar harus berasal dari storage yang diizinkan.
+- Validasi domain affiliate Shopee/TikTok.
+- Validasi `deleteIds` harus milik outfit yang sedang diedit.
+
+Risiko:
+
+- Admin endpoint bisa menerima data tidak sesuai format jika session bocor.
+- Data affiliate bisa diarahkan ke domain yang tidak diinginkan.
+- Item milik outfit lain bisa ikut terhapus jika request dibuat manual dengan `deleteIds` yang salah.
+
+### 8. Dependency `sharp` belum tercatat di `package.json`
+
+Status: **masih perlu diperbaiki**
+
+File:
+
+- `src/app/api/admin/upload/route.ts`
+- `package.json`
+
+Masalah:
+
+Route upload mengimpor:
+
+```ts
+import sharp from "sharp";
+```
+
+Namun `sharp` belum ada di `dependencies` `package.json`.
+
+Risiko:
+
+- Build/deploy bisa gagal di environment bersih.
+- Upload admin bisa error di production.
+
+Yang perlu diubah:
+
+- Tambahkan `sharp` ke dependencies.
+
+### 9. Belum ada audit log admin
+
+Status: **masih perlu ditambahkan**
+
+Risiko:
+
+- Jika ada perubahan data, belum ada catatan siapa melakukan apa.
+- Sulit investigasi jika terjadi penyalahgunaan akun admin.
 
 Yang perlu ditambahkan:
 
-- Password kuat.
-- Rate limit percobaan login.
-- Lockout sementara setelah gagal berulang.
-- MFA untuk admin.
-- Logout yang menghapus session server.
+- Tabel `admin_audit_logs`.
+- Log event:
+  - `admin.login`
+  - `admin.logout`
+  - `outfit.create`
+  - `outfit.update`
+  - `outfit.delete`
+  - `storage.upload`
+  - `storage.cleanup`
 
-## Prioritas 5: Tambahkan monitoring dan audit log
+## Prioritas Perbaikan Berikutnya
 
-Yang perlu ditambahkan:
+### Prioritas 1
 
-- Log aktivitas admin.
-- Alert jika ada banyak login gagal.
-- Alert jika ada banyak upload atau delete.
-- Backup database rutin.
+Ubah `supabase/schema.sql` agar tidak lagi membuat policy write publik dan public upload.
 
-## Rekomendasi Arsitektur Aman
+### Prioritas 2
 
-Desain yang disarankan:
+Hapus fallback env berbahaya:
 
-```txt
-Browser
-  -> login ke /admin/login
-  -> server membuat session cookie httpOnly
-  -> admin page hanya terbuka jika middleware valid
-  -> form admin submit ke /api/admin/outfits
-  -> API cek session admin
-  -> API validasi input
-  -> API menulis ke Supabase memakai service role key
-```
+- `SUPABASE_SERVICE_ROLE_KEY || NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `ADMIN_SESSION_SECRET || "elitecloth-admin-secret-change-me"`
 
-Supabase policy:
+### Prioritas 3
 
-```txt
-public anon:
-  - boleh SELECT outfits published
-  - boleh SELECT outfit_items
-  - boleh INSERT affiliate_clicks dengan validasi terbatas
-  - tidak boleh INSERT/UPDATE/DELETE outfits
-  - tidak boleh INSERT/UPDATE/DELETE outfit_items
-  - tidak boleh upload storage
+Ganti SHA-256 password hash dengan bcrypt/argon2/PBKDF2 salted.
 
-server service role:
-  - boleh melakukan operasi admin setelah session admin valid
-```
+### Prioritas 4
 
-## Checklist Perubahan Kode
+Perketat validasi endpoint admin, terutama slug, URL affiliate, URL storage, dan `deleteIds`.
 
-- [ ] Hapus PIN hardcoded `elite123`.
-- [ ] Hapus pemakaian `localStorage` untuk auth admin.
-- [ ] Buat login admin server-side.
-- [ ] Buat middleware proteksi `/admin/*`.
-- [ ] Buat API/server action khusus admin.
-- [ ] Pindahkan insert/update/delete outfit ke server.
-- [ ] Pindahkan upload image ke server.
-- [ ] Tambahkan validasi input server-side.
-- [ ] Hapus policy public write di Supabase.
-- [ ] Hapus policy public upload di Supabase Storage.
-- [ ] Tambahkan audit log admin.
-- [ ] Tambahkan rate limit login.
-- [ ] Tambahkan backup dan monitoring.
+### Prioritas 5
+
+Tambahkan audit log dan rate limit production-grade.
 
 ## Kesimpulan
 
-Admin login saat ini lemah karena hanya berupa proteksi frontend. PIN bisa dilihat atau dilewati, session bisa dipalsukan lewat `localStorage`, dan policy Supabase memberi akses tulis ke publik.
+Perbaikan yang sudah dilakukan membuat admin jauh lebih aman dibanding versi awal. Celah paling parah, yaitu PIN frontend, `localStorage`, dan write admin langsung dari browser, sudah ditutup di flow aplikasi.
 
-Perbaikan paling penting adalah menutup RLS public write dan memindahkan semua operasi admin ke server yang memverifikasi session admin. Setelah itu, baru hardening login seperti password kuat, rate limit, MFA, dan audit log.
+Namun dokumen ini belum boleh dikosongkan karena masih ada risiko residual yang perlu ditangani, terutama `schema.sql` yang masih menyimpan policy lama, fallback secret/key yang tidak aman, password hash SHA-256 polos, dan validasi API admin yang masih minimal.

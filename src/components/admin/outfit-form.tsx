@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Loader2, UploadCloud, Plus, Save, Trash2, ImagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ImageCropModal } from "./image-crop-modal";
+import { TagPicker } from "./tag-picker";
 
 interface OutfitFormProps {
   initialData?: any;
@@ -271,8 +272,8 @@ export function OutfitForm({ initialData, isEdit = false }: OutfitFormProps) {
             <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-xl border border-border-subtle bg-ink-black px-4 py-3 focus:border-warm-white focus:outline-none" placeholder="casual, vintage..." required />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-warm-white/80">Tags (Pisahkan koma)</label>
-            <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} className="w-full rounded-xl border border-border-subtle bg-ink-black px-4 py-3 focus:border-warm-white focus:outline-none" placeholder="minimalis, earth-tone" />
+            <label className="text-sm font-semibold text-warm-white/80">Tags</label>
+            <TagPicker value={tags} onChange={setTags} />
           </div>
         </div>
       </div>

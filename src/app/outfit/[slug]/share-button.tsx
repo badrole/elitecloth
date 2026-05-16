@@ -3,20 +3,24 @@
 import { Share2, Link as LinkIcon, MessageCircle } from "lucide-react";
 import { useState } from "react";
 
+const BASE_URL = "https://www.elcloth.store";
+
 interface ShareButtonProps {
   title: string;
   text: string;
+  slug: string;
 }
 
-export function ShareButton({ title, text }: ShareButtonProps) {
+export function ShareButton({ title, text, slug }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareUrl = `${BASE_URL}/outfit/${slug}`;
+  const caption = text || `Cek outfit "${title}" di Elitecloth!`;
 
   const handleShare = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title, text, url: shareUrl });
+        await navigator.share({ title, text: caption, url: shareUrl });
       } catch {
         // User cancelled
       }
@@ -26,12 +30,12 @@ export function ShareButton({ title, text }: ShareButtonProps) {
   };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(shareUrl);
+    await navigator.clipboard.writeText(`${caption} ${shareUrl}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${text} ${shareUrl}`)}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${caption} ${shareUrl}`)}`;
 
   return (
     <div className="flex flex-wrap items-center gap-2">

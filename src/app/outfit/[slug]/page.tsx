@@ -147,6 +147,7 @@ export default async function OutfitDetailPage({ params }: PageProps) {
               <ShareButton
                 title={outfit.name}
                 text={`Cek outfit "${outfit.name}" di Elitecloth!`}
+                slug={outfit.slug}
               />
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { OutfitCard } from "@/components/outfit-card";
@@ -26,12 +26,46 @@ export function CatalogContent() {
   const [categories, setCategories] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Read filters from URL
   const category = searchParams.get("category") ?? "";
   const tag = searchParams.get("tag") ?? "";
   const sort = (searchParams.get("sort") as "newest" | "popular") ?? "newest";
   const page = parseInt(searchParams.get("page") ?? "1");
+
+  const loadNextPage = useCallback(async () => {
+    if (loadingMore || page >= totalPages) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    const result = await getOutfits({
+      category: category || undefined,
+      tag: tag || undefined,
+      sort,
+      page: nextPage,
+      limit: 12,
+    });
+    setOutfits((prev) => [...prev, ...result.outfits]);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(nextPage));
+    window.history.replaceState(null, "", `/outfit?${params.toString()}`);
+    setLoadingMore(false);
+  }, [loadingMore, page, totalPages, category, tag, sort, searchParams]);
+
+  // Intersection Observer for infinite scroll on mobile
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadNextPage();
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadNextPage]);
 
   const updateParams = useCallback(
     (updates: Record<string, string>) => {
@@ -270,23 +304,41 @@ export function CatalogContent() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-          {outfits.map((outfit, i) => (
-            <FadeIn
-              key={outfit.id}
-              direction="up"
-              delay={(i % 8) * 70}
-              distance={28}
-            >
-              <OutfitCard outfit={outfit} />
-            </FadeIn>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
+            {outfits.map((outfit, i) => (
+              <FadeIn
+                key={outfit.id}
+                direction="up"
+                delay={(i % 8) * 70}
+                distance={28}
+              >
+                <OutfitCard outfit={outfit} />
+              </FadeIn>
+            ))}
+          </div>
+
+          {/* Infinite scroll trigger (mobile) / Load more */}
+          {page < totalPages && (
+            <div ref={loadMoreRef} className="flex justify-center py-8">
+              {loadingMore ? (
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-warm-white/20 border-t-warm-white/60" />
+              ) : (
+                <button
+                  onClick={() => loadNextPage()}
+                  className="btn-pill border border-border-subtle bg-transparent text-xs text-warm-white/60 hover:border-border-hover hover:text-warm-white md:inline-flex hidden"
+                >
+                  Muat lebih banyak
+                </button>
+              )}
+            </div>
+          )}
+        </>
       )}
 
-      {/* Pagination */}
+      {/* Pagination (desktop only) */}
       {totalPages > 1 && (
-        <div className="mt-10 flex items-center justify-center gap-2">
+        <div className="mt-10 hidden items-center justify-center gap-2 md:flex">
           <button
             onClick={() => updateParams({ page: String(page - 1) })}
             disabled={page <= 1}

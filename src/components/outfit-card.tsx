@@ -1,13 +1,19 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { WishlistButton } from "@/components/wishlist-button";
 import type { Outfit } from "@/lib/supabase";
 import { categoryLabel } from "@/lib/helpers";
-
 
 interface OutfitCardProps {
   outfit: Outfit;
   priority?: boolean;
+}
+
+function isNew(createdAt: string): boolean {
+  const diff = Date.now() - new Date(createdAt).getTime();
+  return diff < 7 * 24 * 60 * 60 * 1000; // 7 days
 }
 
 export function OutfitCard({ outfit, priority = false }: OutfitCardProps) {
@@ -37,8 +43,28 @@ export function OutfitCard({ outfit, priority = false }: OutfitCardProps) {
           >
             {categoryLabel(outfit.category)}
           </Badge>
+          {isNew(outfit.created_at) && (
+            <Badge
+              variant="secondary"
+              className="rounded-full border-none bg-shopee-orange/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-shopee-orange backdrop-blur-md"
+            >
+              Baru
+            </Badge>
+          )}
         </div>
 
+        {/* View count */}
+        {outfit.view_count > 0 && (
+          <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-ink-black/60 px-2 py-1 backdrop-blur-md">
+            <Eye size={10} className="text-warm-white/50" />
+            <span className="text-[10px] font-medium text-warm-white/50">
+              {outfit.view_count}
+            </span>
+          </div>
+        )}
+
+        {/* Wishlist */}
+        <WishlistButton outfitId={outfit.id} className="absolute right-3 top-3" />
       </div>
 
       {/* Info */}
