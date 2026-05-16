@@ -84,7 +84,7 @@ export async function getOutfits(options?: {
 
   if (options?.search) {
     query = query.or(
-      `name.ilike.%${options.search}%,description.ilike.%${options.search}%`
+      `name.ilike.%${options.search}%,description.ilike.%${options.search}%,category.ilike.%${options.search}%,tags.cs.{${options.search}}`
     );
   }
 

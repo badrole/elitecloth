@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Home, LayoutGrid, Search, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -14,7 +15,6 @@ const dockItems = [
 
 export function MobileDock() {
   const pathname = usePathname();
-  const router = useRouter();
 
   // Hide on admin pages
   if (pathname.startsWith("/admin")) return null;
@@ -25,12 +25,12 @@ export function MobileDock() {
         {dockItems.map((item) => {
           const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           return (
-            <motion.button
+            <Link
               key={item.href}
-              onClick={() => router.push(item.href)}
-              whileTap={{ scale: 0.85 }}
+              href={item.href}
+              prefetch={true}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors",
+                "relative flex flex-col items-center gap-1 rounded-xl px-4 py-2 transition-colors",
                 isActive ? "text-warm-white" : "text-warm-white/40"
               )}
               aria-label={item.label}
@@ -44,7 +44,7 @@ export function MobileDock() {
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 />
               )}
-            </motion.button>
+            </Link>
           );
         })}
       </div>

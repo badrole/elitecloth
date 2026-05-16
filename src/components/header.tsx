@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Search, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SearchBar } from "@/components/search-bar";
 
 const navLinks = [
   { href: "/", label: "Beranda" },
@@ -15,7 +14,6 @@ const navLinks = [
 export function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <header className="glass-nav fixed top-0 left-0 right-0 z-50">
@@ -50,35 +48,15 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSearchOpen(!searchOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle text-warm-white/60 transition-colors hover:border-border-hover hover:text-warm-white"
-            aria-label="Cari outfit"
-          >
-            <Search size={18} />
-          </button>
-
-          {/* Mobile menu toggle */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle text-warm-white/60 transition-colors hover:border-border-hover hover:text-warm-white md:hidden"
-            aria-label="Menu"
-          >
-            {menuOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
-        </div>
+        {/* Mobile menu toggle */}
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-border-subtle text-warm-white/60 transition-colors hover:border-border-hover hover:text-warm-white md:hidden"
+          aria-label="Menu"
+        >
+          {menuOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
       </div>
-
-      {/* Search dropdown */}
-      {searchOpen && (
-        <div className="border-b border-border-subtle bg-ink-black/95 px-4 py-4 backdrop-blur-xl md:px-8">
-          <div className="mx-auto max-w-2xl">
-            <SearchBar onClose={() => setSearchOpen(false)} />
-          </div>
-        </div>
-      )}
 
       {/* Mobile menu */}
       {menuOpen && (
