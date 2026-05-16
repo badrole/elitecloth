@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstallAppButton } from "./install-app-button";
 
 const footerLinks = [
   { label: "Katalog Outfit", href: "/outfit" },
@@ -78,10 +79,10 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Disclaimer + Copyright */}
+        {/* Install App + Copyright */}
         <div className="mt-10 border-t border-border-subtle pt-6">
-
-          <p className="mt-2 text-xs text-warm-white/20">
+          <InstallAppButton />
+          <p className="mt-4 text-xs text-warm-white/20">
             © {new Date().getFullYear()} Elitecloth. Semua hak dilindungi.
           </p>
         </div>
