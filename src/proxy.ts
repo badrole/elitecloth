@@ -27,8 +27,12 @@ async function verifyToken(token: string): Promise<boolean> {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow /admin/login page
   if (pathname === "/admin/login") {
+    // If already logged in, redirect to admin
+    const session = request.cookies.get(SESSION_COOKIE)?.value;
+    if (session && (await verifyToken(session))) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
     return NextResponse.next();
   }
 

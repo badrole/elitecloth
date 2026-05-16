@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -13,7 +13,16 @@ const navLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  }
 
   return (
     <header className="glass-nav fixed top-0 left-0 right-0 z-50">
@@ -27,8 +36,8 @@ export function Header() {
           <span className="text-xl tracking-[-0.02em]">ELITECLOTH</span>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden items-center gap-8 md:flex">
+        {/* Desktop: Nav + Search */}
+        <div className="hidden items-center gap-6 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -46,7 +55,19 @@ export function Header() {
               )}
             </Link>
           ))}
-        </nav>
+
+          {/* Desktop Search */}
+          <form onSubmit={handleSearch} className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-white/30" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Cari outfit..."
+              className="w-48 rounded-full border border-border-subtle bg-warm-white/5 py-2 pl-9 pr-3 text-xs text-warm-white placeholder:text-warm-white/30 focus:w-64 focus:border-border-hover focus:outline-none transition-all"
+            />
+          </form>
+        </div>
 
         {/* Mobile menu toggle */}
         <button
